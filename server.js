@@ -1,39 +1,43 @@
 const express = require("express");
-const cors = require("cors");
-
 const app = express();
-app.use(cors());
+
 app.use(express.json());
 app.use(express.static("public"));
 
-// RAM database
 let surveys = [];
 
-// anket oluştur
+// ANKET OLUŞTUR
 app.post("/survey", (req, res) => {
-  const survey = {
+  const { question, options } = req.body;
+
+  const newSurvey = {
     id: Date.now().toString(),
-    question: req.body.question,
-    options: req.body.options,
-    votes: req.body.options.map(() => 0)
+    question,
+    options,
+    votes: options.map(() => 0)
   };
 
-  surveys.push(survey);
-  res.json(survey);
+  surveys.push(newSurvey);
+  res.json(newSurvey);
 });
 
-// anketleri getir
+// ANKETLERİ GETİR
 app.get("/survey", (req, res) => {
   res.json(surveys);
 });
 
-// oy ver
+// OY VER
 app.post("/vote/:id", (req, res) => {
   const survey = surveys.find(s => s.id === req.params.id);
+
+  if (!survey) return res.status(404).send("Anket bulunamadı");
+
   survey.votes[req.body.optionIndex]++;
   res.json(survey);
 });
 
-app.listen(3000, () => {
-  console.log("Server çalışıyor: http://localhost:3000");
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log("Server çalışıyor");
 });
