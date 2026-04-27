@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Anket Sistemi</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #74ebd5, #9face6);
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: white;
+      margin-bottom: 20px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #6c5ce7;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #4834d4;
+    }
+
+    .survey {
+      margin-top: 15px;
+      padding: 15px;
+      border-radius: 10px;
+      background: #f7f7f7;
+    }
+
+    .option-btn {
+      width: 100%;
+      margin-top: 8px;
+      background: #00b894;
+    }
+
+    .option-btn:hover {
+      background: #019875;
+    }
+
+    .title {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>📝 Anket Sistemi</h1>
+
+<div class="container">
+
+  <!-- ANKET OLUŞTUR -->
+  <div class="card">
+    <h3>Yeni Anket Oluştur</h3>
+
+    <input id="question" placeholder="Soru yaz...">
+    <input id="opt1" placeholder="Seçenek 1">
+    <input id="opt2" placeholder="Seçenek 2">
+
+    <button onclick="createSurvey()">Anket Oluştur</button>
+  </div>
+
+  <!-- ANKET LİSTESİ -->
+  <div id="list"></div>
+
+</div>
+
+<script>
+const API = "http://localhost:3000";
+
+async function createSurvey() {
+  const question = document.getElementById("question").value;
+  const opt1 = document.getElementById("opt1").value;
+  const opt2 = document.getElementById("opt2").value;
+
+  await fetch(API + "/survey", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      question,
+      options: [opt1, opt2]
+    })
+  });
+
+  loadSurveys();
+}
+
+async function loadSurveys() {
+  const res = await fetch(API + "/survey");
+  const data = await res.json();
+
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  data.forEach(s => {
+    const div = document.createElement("div");
+    div.className = "card";
+
+    div.innerHTML = `
+      <div class="title">❓ ${s.question}</div>
+
+      ${s.options.map((opt, i) => `
+        <button class="option-btn" onclick="vote('${s.id}', ${i})">
+          ${opt} - 🗳️ ${s.votes[i]} oy
+        </button>
+      `).join("")}
+    `;
+
+    list.appendChild(div);
+  });
+}
+
+async function vote(id, index) {
+  await fetch(API + "/vote/${id}", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ optionIndex: index })
+  });
+
+  loadSurveys();
+}
+
+loadSurveys();
+</script>
+
+</body>
+</html>
